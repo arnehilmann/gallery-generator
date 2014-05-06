@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e -E -u -C -o pipefail
+
+STAGEDIR=${1:?no STAGEDIR given?!}
+shift
+
+rm -rf $STAGEDIR && mkdir -v $STAGEDIR
+cp -vr template/* $STAGEDIR
+
+cp -v $@ $STAGEDIR/content/images
+chmod u+w $STAGEDIR/content/images/*
+
+cd $STAGEDIR/content
+
+for IMAGE in $(find images -type f); do
+    echo "* []($IMAGE)" >> index.md
+    echo >> index.md
+done
+sed -i "/^Date:/s/$/$(date +%Y-%m-%d)/" index.md
+
+cd ..
+
+rm -rf ve
+virtualenv ve
+set +u
+source ve/bin/activate
+set -u
+pip install pelican Markdown
+
+git clone https://github.com/arnehilmann/pelican-bootstrap3.git
+
+echo "New gallery stage generated in $STAGEDIR."
+echo
+echo "What's next:"
+echo
+echo "cd $STAGEDIR"
+echo "source ve/bin/activate"
+echo "make html"
+echo "grep -r TODO *.py content/"
+echo
+
+
